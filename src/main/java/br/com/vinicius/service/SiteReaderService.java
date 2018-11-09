@@ -124,8 +124,6 @@ public class SiteReaderService {
 				headerBuilder.append( getValueFromElement(thEle) );
 				headerBuilder.append( FIELD_SEPARATOR );
 			}
-			
-			System.out.println(headerBuilder.toString());
 		}
 	}
 
