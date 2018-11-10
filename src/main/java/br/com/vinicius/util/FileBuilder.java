@@ -14,25 +14,22 @@ public class FileBuilder {
 	private static final String FOLDER_NAME = "checkpoint-report";
 	
 	private String data = null;
-	private File file = null;
+	public File file = null;
 	DirectoryBuilder directoryBuilder;	
 	
 	public FileBuilder() {
 		this.directoryBuilder = new DirectoryBuilder();
 		this.data = new SimpleDateFormat("dd-MM-yyyy").format( new Date(System.currentTimeMillis()) );
+		this.file = new File( directoryBuilder.createDirectory( FOLDER_NAME )
+				.concat( DIRECTORY_SAPARATOR )
+				.concat( FOLDER_NAME )
+				.concat( NAME_SEPARATOR )
+				.concat( data )
+				.concat( FILE_EXTENSION ) );
 	}
 
 	public void fileWriter(String message) {			
-		try {			
-					
-			file = new File( directoryBuilder.createDirectory( FOLDER_NAME )
-						.concat( DIRECTORY_SAPARATOR )
-						.concat( FOLDER_NAME )
-						.concat( NAME_SEPARATOR )
-						.concat( data )
-						.concat( FILE_EXTENSION ) );	
-			
-			System.out.println(file.getAbsolutePath());
+		try {		
 			
 			BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, false));
 			

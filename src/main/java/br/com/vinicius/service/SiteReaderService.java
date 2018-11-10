@@ -34,14 +34,27 @@ public class SiteReaderService {
 
 	private boolean canContinue;
 	
-	private StringBuilder dataBuilder = new StringBuilder();
-	private StringBuilder headerBuilder = new StringBuilder();
+	private StringBuilder dataBuilder;
+	private StringBuilder headerBuilder;	
+	private FileBuilder fileBuilder;
+
+	private int cont;
 	
-	private FileBuilder fileBuilder = new FileBuilder();
+	public SiteReaderService() {
+		this.dataBuilder = new StringBuilder();
+		this.headerBuilder = new StringBuilder();
+		this.fileBuilder = new FileBuilder();
+		this.cont = 1;
+		this.canContinue = false;
+	}
 	
-	public void getDataFromDom() throws IOException {
-	
-		do {
+	public void getDataFromDom() throws IOException {	
+		
+		startInfos();
+				
+		do {			
+			printConsole("Reading page: " + cont);
+			
 			Document domDocument = getDom();
 
 			Element fullTableElement = domDocument.getElementById( ID_ELEMENT_TABLE );
@@ -52,15 +65,37 @@ public class SiteReaderService {
 			
 			if (!canContinue) {
 				getHeadTitles(fullTableElement);
+				
+				printConsole("The last page was read");
 			}
-
+			
+			cont++;
+			
 		} while ( canContinue );
 		
 		generateOutputFile(headerBuilder, dataBuilder);
+	}
+
+	private void startInfos() {
+		printConsole("------------------------------------------");
+		printConsole("----------------- Setup ------------------");
+		printConsole("URL: " + URL.concat(URL_COMPLEMENT));
+		printConsole("TIMEOUT: " + CONNECTION_TIMEOUT / 1000 + " seconds");
+		printConsole("OUTPUT FILE: " + fileBuilder.file.getAbsolutePath());
+		printConsole("---- WARNING ----");
+		printConsole("Sometimes it may take some time to process.");
+		printConsole("------------------------------------------");
 		
+	} 
+	
+	private void printConsole(String message){
+		System.out.println(message);
+		System.out.println();	
 	}
 
 	private void generateOutputFile(StringBuilder headerBuilder, StringBuilder dataBuilder) {
+		printConsole("Generating output file");
+		
 		StringBuilder fullDataBuilder = new StringBuilder();
 		
 		fullDataBuilder.append( headerBuilder.toString() );
@@ -68,11 +103,12 @@ public class SiteReaderService {
 		fullDataBuilder.append( dataBuilder.toString() );
 		
 		fileBuilder.fileWriter(fullDataBuilder.toString());
+	
+		printConsole("Output File was generated..");
 	}
 
 	private void getUrlNextPage(Document domDocument) {
 		Elements paginationElements = domDocument.getElementsByClass( PAGINATION_TAG );
-		canContinue = false;
 
 		for (Element pagination : paginationElements) {
 
@@ -82,6 +118,8 @@ public class SiteReaderService {
 
 					URL_COMPLEMENT = element.attr( HREF_PROPERTIE );
 					canContinue = true;
+				} else {
+					canContinue = false;
 				}
 			}
 		}
@@ -135,7 +173,7 @@ public class SiteReaderService {
 		return element.text();
 	}
 
-	public Document getDom() throws IOException {
+	private Document getDom() throws IOException {
 		return Jsoup.connect( URL.concat(URL_COMPLEMENT) ).timeout( CONNECTION_TIMEOUT ).get();
 	}
 }
