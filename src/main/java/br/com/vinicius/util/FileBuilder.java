@@ -7,15 +7,17 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import br.com.vinicius.enums.MessagesEnum;
+
 public class FileBuilder {	
 	private static final String DIRECTORY_SAPARATOR = "\\";
 	private static final String FILE_EXTENSION = ".csv";
-	private static final String NAME_SEPARATOR = "-";
+	private static final String NAME_SEPARATOR = "_";
 	private static final String FOLDER_NAME = "checkpoint-report";
 	
 	private String data = null;
 	public File file = null;
-	DirectoryBuilder directoryBuilder;	
+	private DirectoryBuilder directoryBuilder;	
 	
 	public FileBuilder() {
 		this.directoryBuilder = new DirectoryBuilder();
@@ -31,14 +33,14 @@ public class FileBuilder {
 	public void fileWriter(String message) {			
 		try {		
 			
-			BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file, false));
+			BufferedWriter bufferedWriter = new BufferedWriter( new FileWriter(file, false) );
 			
 			bufferedWriter.write(message);
 			bufferedWriter.flush();
 			bufferedWriter.close();					
 			
 		} catch (IOException e) {
-			throw new RuntimeException("There had a problem while write in output file " + e.getMessage());			
+			throw new RuntimeException( MessagesEnum.EXCEPTION_WRITE_FILE_MESSAGE.getValue() + e.getMessage() );			
 		} 
 	}
 }

@@ -2,41 +2,32 @@ package br.com.vinicius.service;
 
 import java.io.IOException;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import br.com.vinicius.enums.ConfigEnum;
+import br.com.vinicius.enums.MessagesEnum;
+import br.com.vinicius.enums.TagElementsEnum;
 import br.com.vinicius.util.FileBuilder;
+import br.com.vinicius.util.Util;
 
 public class SiteReaderService {
+	
+	private String urlComplement;
 
-	private static final String URL = "https://www.checkpoint.com";
-	private static String URL_COMPLEMENT = "/advisories/";
-
-	private static final String THEAD_TAG = "thead";
-	private static final String TBODY_TAG = "tbody";
-	private static final String TH_TAG = "th";
-	private static final String TR_TAG = "tr";
-	private static final String TD_TAG = "td";
-	private static final String A_TAG = "a";
-
-	private static final String PAGINATION_TAG = "pagination";
-	private static final String MESSAGE_NEXT_PAGE = "Next Page";
 	private static final String ID_ELEMENT_TABLE = "cp_advisory_table_sorter";
-
 	private static final String FIELD_SEPARATOR = ";";
 	private static final String LINE_SEPARATOR = "\n";
-
 	private static final String HREF_PROPERTIE = "href";
 	
-	private static final int CONNECTION_TIMEOUT = 60000;
-
 	private boolean canContinue;
 	
 	private StringBuilder dataBuilder;
 	private StringBuilder headerBuilder;	
 	private FileBuilder fileBuilder;
+	
+	private Util util;
 
 	private int cont;
 	
@@ -44,8 +35,10 @@ public class SiteReaderService {
 		this.dataBuilder = new StringBuilder();
 		this.headerBuilder = new StringBuilder();
 		this.fileBuilder = new FileBuilder();
+		this.util = new Util();
 		this.cont = 1;
 		this.canContinue = false;
+		this.urlComplement = ConfigEnum.URL_COMPLEMENT.getValue();
 	}
 	
 	public void getDataFromDom() throws IOException {	
@@ -53,9 +46,9 @@ public class SiteReaderService {
 		startInfos();
 				
 		do {			
-			printConsole("Reading page: " + cont);
+			util.printConsole( MessagesEnum.READING_PAGE_MESSAGE.getValue() + cont );
 			
-			Document domDocument = getDom();
+			Document domDocument = util.getDom(ConfigEnum.BASE_URL.getValue(), urlComplement, ConfigEnum.CONNECTION_TIMEOUT.getValue());
 
 			Element fullTableElement = domDocument.getElementById( ID_ELEMENT_TABLE );
 
@@ -66,7 +59,7 @@ public class SiteReaderService {
 			if (!canContinue) {
 				getHeadTitles(fullTableElement);
 				
-				printConsole("The last page was read");
+				util.printConsole( MessagesEnum.LAST_PAGE_REACHED_MESSAGE.getValue() );
 			}
 			
 			cont++;
@@ -77,24 +70,19 @@ public class SiteReaderService {
 	}
 
 	private void startInfos() {
-		printConsole("------------------------------------------");
-		printConsole("----------------- Setup ------------------");
-		printConsole("URL: " + URL.concat(URL_COMPLEMENT));
-		printConsole("TIMEOUT: " + CONNECTION_TIMEOUT / 1000 + " seconds");
-		printConsole("OUTPUT FILE: " + fileBuilder.file.getAbsolutePath());
-		printConsole("---- WARNING ----");
-		printConsole("Sometimes it may take some time to process.");
-		printConsole("------------------------------------------");
+		util.printConsole("------------------------------------------");
+		util.printConsole("----------------- Setup ------------------");
+		util.printConsole("URL: " + ConfigEnum.BASE_URL.getValue().concat(urlComplement));
+		util.printConsole("TIMEOUT: " + util.getTimeOutInSecondsFromString( ConfigEnum.CONNECTION_TIMEOUT.getValue() ) + " seconds");
+		util.printConsole("OUTPUT FILE: " + fileBuilder.file.getAbsolutePath());
+		util.printConsole("---- WARNING ----");
+		util.printConsole( MessagesEnum.WARNING_TIME_PROCESS_MESSAGE.getValue() );
+		util.printConsole("------------------------------------------");
 		
 	} 
 	
-	private void printConsole(String message){
-		System.out.println(message);
-		System.out.println();	
-	}
-
 	private void generateOutputFile(StringBuilder headerBuilder, StringBuilder dataBuilder) {
-		printConsole("Generating output file");
+		util.printConsole( MessagesEnum.GENERATING_FILE_MESSAGE.getValue() );
 		
 		StringBuilder fullDataBuilder = new StringBuilder();
 		
@@ -104,19 +92,19 @@ public class SiteReaderService {
 		
 		fileBuilder.fileWriter(fullDataBuilder.toString());
 	
-		printConsole("Output File was generated..");
+		util.printConsole( MessagesEnum.FILE_GENERATED_MESSAGE.getValue() );
 	}
 
 	private void getUrlNextPage(Document domDocument) {
-		Elements paginationElements = domDocument.getElementsByClass( PAGINATION_TAG );
+		Elements paginationElements = domDocument.getElementsByClass( TagElementsEnum.PAGINATION_TAG.getValue() );
 
 		for (Element pagination : paginationElements) {
 
-			for (Element element : pagination.getElementsByTag( A_TAG )) {
+			for (Element element : pagination.getElementsByTag( TagElementsEnum.A_TAG.getValue() )) {
 
-				if (element.text().contains( MESSAGE_NEXT_PAGE )) {
+				if (element.text().contains( TagElementsEnum.NEXT_PAGE_TAG.getValue() )) {
 
-					URL_COMPLEMENT = element.attr( HREF_PROPERTIE );
+					urlComplement = element.attr( HREF_PROPERTIE );
 					canContinue = true;
 				} else {
 					canContinue = false;
@@ -126,7 +114,7 @@ public class SiteReaderService {
 	}
 
 	private void getFields(Element fullTableElement) {
-		Elements tBodyElements = fullTableElement.getElementsByTag( TBODY_TAG );
+		Elements tBodyElements = fullTableElement.getElementsByTag( TagElementsEnum.TBODY_TAG.getValue() );
 
 		for (Element bodyElement : tBodyElements) {
 
@@ -135,31 +123,31 @@ public class SiteReaderService {
 	}
 
 	private void getFieldsData(Element bodyElement) {
-		Elements trElements = bodyElement.getElementsByTag( TR_TAG );
+		Elements trElements = bodyElement.getElementsByTag( TagElementsEnum.TR_TAG.getValue() );
 
 		for (Element trEle : trElements) {
 			addTextToBuilder( LINE_SEPARATOR );
 
-			Elements thElements = trEle.getElementsByTag( TD_TAG );
+			Elements thElements = trEle.getElementsByTag( TagElementsEnum.TD_TAG.getValue() );
 
 			for (Element thEle : thElements) {
 
-				addTextToBuilder( getValueFromElement(thEle) );
+				addTextToBuilder( util.getValueFromElement(thEle).trim() );
 				addTextToBuilder( FIELD_SEPARATOR );
 			}
 		}
 	}
 
 	private void getHeadTitles(Element fullTableElement) {
-		Elements tHeadElements = fullTableElement.getElementsByTag( THEAD_TAG );
+		Elements tHeadElements = fullTableElement.getElementsByTag( TagElementsEnum.THEAD_TAG.getValue() );
 
 		for (Element tHead : tHeadElements) {
 
-			Elements thElements = tHead.getElementsByTag( TH_TAG );
+			Elements thElements = tHead.getElementsByTag( TagElementsEnum.TH_TAG.getValue() );
 
 			for (Element thEle : thElements) {
 
-				headerBuilder.append( getValueFromElement(thEle) );
+				headerBuilder.append( util.getValueFromElement(thEle) );
 				headerBuilder.append( FIELD_SEPARATOR );
 			}
 		}
@@ -169,11 +157,4 @@ public class SiteReaderService {
 		dataBuilder.append(text);
 	}
 
-	private String getValueFromElement(Element element) {
-		return element.text();
-	}
-
-	private Document getDom() throws IOException {
-		return Jsoup.connect( URL.concat(URL_COMPLEMENT) ).timeout( CONNECTION_TIMEOUT ).get();
-	}
 }

@@ -2,6 +2,7 @@ package br.com.vinicius.main;
 
 import java.io.IOException;
 
+import br.com.vinicius.enums.MessagesEnum;
 import br.com.vinicius.service.SiteReaderService;
 
 public class ExecutionMain {
@@ -14,7 +15,7 @@ public class ExecutionMain {
 			service.getDataFromDom();
 			
 		} catch (IOException e) {
-			System.out.println("There had a problem while processing page: " + e.getMessage() + e);
+			System.out.println( MessagesEnum.EXCEPTION_PROCESSING_MESSAGE.getValue() + e.getMessage() + e );
 		}
 	}
 }
