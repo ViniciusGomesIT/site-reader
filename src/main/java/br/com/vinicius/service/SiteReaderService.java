@@ -22,43 +22,45 @@ public class SiteReaderService {
 	private static final String HREF_PROPERTIE = "href";
 	
 	private boolean canContinue;
+	private boolean isFirstPage;
 	
 	private StringBuilder dataBuilder;
-	private StringBuilder headerBuilder;	
-	private FileBuilder fileBuilder;
-	
+	private FileBuilder fileBuilder;	
 	private Util util;
 
 	private int cont;
 	
 	public SiteReaderService() {
 		this.dataBuilder = new StringBuilder();
-		this.headerBuilder = new StringBuilder();
 		this.fileBuilder = new FileBuilder();
 		this.util = new Util();
 		this.cont = 1;
 		this.canContinue = false;
+		this.isFirstPage = true;
 		this.urlComplement = ConfigEnum.URL_COMPLEMENT.getValue();
 	}
 	
-	public void getDataFromDom() throws IOException {	
+	public void getDataFromDom() throws IOException {			
 		
-		startInfos();
+		util.printStartInfos( fileBuilder.getFilePath() );
 				
 		do {			
 			util.printConsole( MessagesEnum.READING_PAGE_MESSAGE.getValue() + cont );
 			
-			Document domDocument = util.getDom(ConfigEnum.BASE_URL.getValue(), urlComplement, ConfigEnum.CONNECTION_TIMEOUT.getValue());
-
+			Document domDocument = util.getDom( ConfigEnum.BASE_URL.getValue(), urlComplement, ConfigEnum.CONNECTION_TIMEOUT.getValue() );
+			
 			Element fullTableElement = domDocument.getElementById( ID_ELEMENT_TABLE );
+			
+			if (isFirstPage) {				
+				getHeadTitles(fullTableElement);
+				isFirstPage = false;
+			}
 
 			getFields(fullTableElement);
 
 			getUrlNextPage(domDocument);
 			
-			if (!canContinue) {
-				getHeadTitles(fullTableElement);
-				
+			if (!canContinue) {					
 				util.printConsole( MessagesEnum.LAST_PAGE_REACHED_MESSAGE.getValue() );
 			}
 			
@@ -66,33 +68,7 @@ public class SiteReaderService {
 			
 		} while ( canContinue );
 		
-		generateOutputFile(headerBuilder, dataBuilder);
-	}
-
-	private void startInfos() {
-		util.printConsole("------------------------------------------");
-		util.printConsole("----------------- Setup ------------------");
-		util.printConsole("URL: " + ConfigEnum.BASE_URL.getValue().concat(urlComplement));
-		util.printConsole("TIMEOUT: " + util.getTimeOutInSecondsFromString( ConfigEnum.CONNECTION_TIMEOUT.getValue() ) + " seconds");
-		util.printConsole("OUTPUT FILE: " + fileBuilder.file.getAbsolutePath());
-		util.printConsole("---- WARNING ----");
-		util.printConsole( MessagesEnum.WARNING_TIME_PROCESS_MESSAGE.getValue() );
-		util.printConsole("------------------------------------------");
-		
-	} 
-	
-	private void generateOutputFile(StringBuilder headerBuilder, StringBuilder dataBuilder) {
-		util.printConsole( MessagesEnum.GENERATING_FILE_MESSAGE.getValue() );
-		
-		StringBuilder fullDataBuilder = new StringBuilder();
-		
-		fullDataBuilder.append( headerBuilder.toString() );
-		fullDataBuilder.append( LINE_SEPARATOR );
-		fullDataBuilder.append( dataBuilder.toString() );
-		
-		fileBuilder.fileWriter(fullDataBuilder.toString());
-	
-		util.printConsole( MessagesEnum.FILE_GENERATED_MESSAGE.getValue() );
+		util.generateOutputFile(dataBuilder, this.fileBuilder);
 	}
 
 	private void getUrlNextPage(Document domDocument) {
@@ -106,6 +82,7 @@ public class SiteReaderService {
 
 					urlComplement = element.attr( HREF_PROPERTIE );
 					canContinue = true;
+					
 				} else {
 					canContinue = false;
 				}
@@ -147,14 +124,15 @@ public class SiteReaderService {
 
 			for (Element thEle : thElements) {
 
-				headerBuilder.append( util.getValueFromElement(thEle) );
-				headerBuilder.append( FIELD_SEPARATOR );
+				dataBuilder.append( util.getValueFromElement(thEle) );
+				dataBuilder.append( FIELD_SEPARATOR );
 			}
 		}
+		
+		dataBuilder.append( LINE_SEPARATOR );
 	}
 
 	private void addTextToBuilder(String text) {
 		dataBuilder.append(text);
 	}
-
 }

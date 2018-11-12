@@ -16,7 +16,7 @@ public class FileBuilder {
 	private static final String FOLDER_NAME = "checkpoint-report";
 	
 	private String data = null;
-	public File file = null;
+	private File file = null;
 	private DirectoryBuilder directoryBuilder;	
 	
 	public FileBuilder() {
@@ -42,5 +42,9 @@ public class FileBuilder {
 		} catch (IOException e) {
 			throw new RuntimeException( MessagesEnum.EXCEPTION_WRITE_FILE_MESSAGE.getValue() + e.getMessage() );			
 		} 
+	}
+	
+	public String getFilePath() {
+		return this.file.getAbsolutePath();
 	}
 }

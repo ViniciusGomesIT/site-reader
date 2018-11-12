@@ -2,8 +2,8 @@ package br.com.vinicius.enums;
 
 public enum ConfigEnum {
 
-	BASE_URL("https://www.checkpoint.com"),
-	URL_COMPLEMENT("/advisories/"),
+	BASE_URL("https://www.XXXX.com"),
+	URL_COMPLEMENT("/XXXX/"),
 	CONNECTION_TIMEOUT("60000");
 	
 	public String value;
